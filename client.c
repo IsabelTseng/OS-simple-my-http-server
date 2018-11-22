@@ -1,6 +1,15 @@
 #include "client.h"
 #define MAX_MSG_SIZE 1024
 
+struct param {
+    int sockfd;
+    char* folder;
+    char* subRequest;
+    int PORT;
+};
+
+int child(void* arg);
+
 /*
  * The function get_sockaddr converts the server's address and port into a form usable to create a
  * scoket
@@ -58,6 +67,109 @@ int open_connection(struct addrinfo* addr_list)
 
 }
 
+int getmsg(int socketfd, char* path, int PORT)
+{
+
+    char recvBuff[1024];
+    recv(socketfd, recvBuff, sizeof(recvBuff), 0);
+    printf("%s\n",recvBuff);
+
+    char secPart[1024]="";
+    char *remain;
+    // char* deli = " ";
+    remain = strtok(recvBuff,"\r\n");
+    while(remain != NULL) {
+        // printf("%s\n",remain);
+        if(strcmp(remain,"Server: httpserver/1.x")==0) {
+            remain = strtok(NULL, "\r\n");
+            strcpy(secPart,remain);
+            break;
+        }
+        remain = strtok(NULL, "\r\n");
+    }
+    // remain = strstr(recvBuff, "\r\n\r\n");
+// printf("%s!!\n",secPart);
+    remain = strtok(secPart, " ");
+    // printf("%s++\n",remain);
+    struct param parameter = {socketfd, path, remain, PORT};
+    pthread_t t; // pthread variable
+    pthread_create(&t, NULL, child, &parameter); // new thread
+
+    pthread_join(t, NULL); // 等待子執行緒執行完成
+    while(remain != NULL) {
+        remain = strtok(NULL, " ");
+        if(remain == NULL)break;
+        // printf("%s++\n",remain);
+
+        struct param parameter = {socketfd, path, remain, PORT};
+
+        // printf("%d\n",parameter.sockfd);
+        pthread_t t; // pthread variable
+        pthread_create(&t, NULL, child, &parameter); // new thread
+
+        pthread_join(t, NULL); // 等待子執行緒執行完成
+    }
+}
+
+int child(void* arg)
+{
+    // struct param *parameter = (struct param *) arg;
+    // char sendBuff[1024]="",recvBuff[1024]="", request[1024]="";
+    // strcpy(request,parameter->folder);
+    // strcat(request,"/");
+    // strcat(request,parameter->subRequest);
+    // sprintf(sendBuff, "GET %s HTTP/1.x\r\nHOST: 127.0.0.1:%d \r\n\r\n",request,parameter->PORT);
+    // // printf("~~\n%d\n~~\n",parameter->PORT);
+    // struct addrinfo* results = get_sockaddr("127.0.0.1", parameter->PORT);
+    // int sockfd = open_connection(results);
+    // write(sockfd, sendBuff, strlen(sendBuff));
+
+    // int numbytes = recv(sockfd,recvBuff,sizeof(recvBuff)-1,0);
+    // if (numbytes == -1) {
+    //     perror("recv");
+    //     exit(1);
+    // }
+
+    // // recvBuff[numbytes] = '\0';
+    // printf("%s\n", recvBuff);
+    // pthread_exit(NULL);
+
+    // char *filepath = (char*) name;
+    struct param *parameter = (struct param *) arg;
+    char sendBuff[200];
+    char recvBuff[1024];
+    char request[1024]="";
+    strcpy(request,parameter->folder);
+    strcat(request,"/");
+    strcat(request,parameter->subRequest);
+
+    struct sockaddr_in addr;
+
+    int socketfd = socket(PF_INET, SOCK_STREAM, 0);
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(parameter->PORT);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
+
+    connect(socketfd, (struct sockaddr*)&addr, sizeof(addr));
+
+    memset(recvBuff, '\0',sizeof(recvBuff));
+    memset(sendBuff, '\0', sizeof(sendBuff));
+
+    sprintf(sendBuff, "GET %s HTTP/1.x\r\nHOST: 127.0.0.1:%d \r\n\r\n",request,parameter->PORT);
+    send(socketfd, sendBuff, strlen(sendBuff), 0);
+
+    char sendPath[300];
+    memset(sendPath,'\0',sizeof(sendPath));
+
+    // getmsg(socketfd, request, parameter->PORT);
+    recv(socketfd, recvBuff, sizeof(recvBuff), 0);
+    printf("%s\n",recvBuff);
+
+    pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[])
 {
     int numbytes;
@@ -98,6 +210,43 @@ int main(int argc, char *argv[])
 
     recvBuff[numbytes] = '\0';
     printf("%s\n", recvBuff);
+
+//"HTTP/1.x 200 OK\nContent-type: directory\nServer: httpserver/1.x\n\n"
+    char secPart[1024]="",returnString[1024] = "";
+    char* cutTrash, *remain;
+    // char* deli = " ";
+    remain = strtok(recvBuff,"\r\n");
+    while(remain != NULL) {
+        // printf("%s\n",remain);
+        if(strcmp(remain,"Server: httpserver/1.x")==0) {
+            remain = strtok(NULL, "\r\n");
+            strcpy(secPart,remain);
+            break;
+        }
+        remain = strtok(NULL, "\r\n");
+    }
+    // remain = strstr(recvBuff, "\r\n\r\n");
+// printf("%s!!\n",secPart);
+    remain = strtok(secPart, " ");
+    // printf("%s++\n",remain);
+    struct param parameter = {sockfd, QUERY_FILE_OR_DIR, remain, PORT};
+    pthread_t t; // pthread variable
+    pthread_create(&t, NULL, child, &parameter); // new thread
+
+    pthread_join(t, NULL); // 等待子執行緒執行完成
+    while(remain != NULL) {
+        remain = strtok(NULL, " ");
+        if(remain == NULL)break;
+        // printf("%s++\n",remain);
+
+        struct param parameter = {sockfd, QUERY_FILE_OR_DIR, remain, PORT};
+
+        // printf("%d\n",parameter.sockfd);
+        pthread_t t; // pthread variable
+        pthread_create(&t, NULL, child, &parameter); // new thread
+
+        pthread_join(t, NULL); // 等待子執行緒執行完成
+    }
 
     return 0;
 }
