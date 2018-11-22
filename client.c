@@ -74,40 +74,39 @@ int getmsg(int socketfd, char* path, int PORT)
     recv(socketfd, recvBuff, sizeof(recvBuff), 0);
     printf("%s\n",recvBuff);
 
-    char secPart[1024]="";
-    char *remain;
+    char secPart[1024]="",returnString[1024] = "", bla[1024]="";
+    char* cutTrash, *remain;
     // char* deli = " ";
     remain = strtok(recvBuff,"\r\n");
-    while(remain != NULL) {
-        // printf("%s\n",remain);
-        if(strcmp(remain,"Server: httpserver/1.x")==0) {
-            remain = strtok(NULL, "\r\n");
-            strcpy(secPart,remain);
-            break;
-        }
-        remain = strtok(NULL, "\r\n");
-    }
-    // remain = strstr(recvBuff, "\r\n\r\n");
+    remain = strtok(NULL,"\r\n");
+    strcpy(bla,remain);
+    cutTrash = strtok(NULL," ");
+    cutTrash = strtok(NULL," ");
+    if(strcmp(cutTrash,"directory")==0) {
+        remain = strtok(bla, "\r\n");
+        strcpy(secPart,remain);
+        // remain = strstr(recvBuff, "\r\n\r\n");
 // printf("%s!!\n",secPart);
-    remain = strtok(secPart, " ");
-    // printf("%s++\n",remain);
-    struct param parameter = {socketfd, path, remain, PORT};
-    pthread_t t; // pthread variable
-    pthread_create(&t, NULL, child, &parameter); // new thread
-
-    pthread_join(t, NULL); // 等待子執行緒執行完成
-    while(remain != NULL) {
-        remain = strtok(NULL, " ");
-        if(remain == NULL)break;
+        remain = strtok(secPart, " ");
         // printf("%s++\n",remain);
-
         struct param parameter = {socketfd, path, remain, PORT};
-
-        // printf("%d\n",parameter.sockfd);
         pthread_t t; // pthread variable
         pthread_create(&t, NULL, child, &parameter); // new thread
 
         pthread_join(t, NULL); // 等待子執行緒執行完成
+        while(remain != NULL) {
+            remain = strtok(NULL, " ");
+            if(remain == NULL)break;
+            // printf("%s++\n",remain);
+
+            struct param parameter = {socketfd, path, remain, PORT};
+
+            // printf("%d\n",parameter.sockfd);
+            pthread_t t; // pthread variable
+            pthread_create(&t, NULL, child, &parameter); // new thread
+
+            pthread_join(t, NULL); // 等待子執行緒執行完成
+        }
     }
 }
 
@@ -212,41 +211,49 @@ int main(int argc, char *argv[])
     printf("%s\n", recvBuff);
 
 //"HTTP/1.x 200 OK\nContent-type: directory\nServer: httpserver/1.x\n\n"
-    char secPart[1024]="",returnString[1024] = "";
+    char secPart[1024]="",returnString[1024] = "", bla[1024]="";
     char* cutTrash, *remain;
     // char* deli = " ";
     remain = strtok(recvBuff,"\r\n");
-    while(remain != NULL) {
-        // printf("%s\n",remain);
-        if(strcmp(remain,"Server: httpserver/1.x")==0) {
-            remain = strtok(NULL, "\r\n");
-            strcpy(secPart,remain);
-            break;
-        }
-        remain = strtok(NULL, "\r\n");
-    }
-    // remain = strstr(recvBuff, "\r\n\r\n");
+    remain = strtok(NULL,"\r\n");
+    strcpy(bla,remain);
+    cutTrash = strtok(NULL," ");
+    cutTrash = strtok(NULL," ");
+    if(strcmp(cutTrash,"directory")==0) {
+        remain = strtok(bla, "\r\n");
+        strcpy(secPart,remain);
+
+        // while(remain != NULL) {
+        //     // printf("%s\n",remain);
+        //     if(strcmp(remain,"Server: httpserver/1.x")==0) {
+        //         remain = strtok(NULL, "\r\n");
+        //         strcpy(secPart,remain);
+        //         break;
+        //     }
+        //     remain = strtok(NULL, "\r\n");
+        // }
+        // remain = strstr(recvBuff, "\r\n\r\n");
 // printf("%s!!\n",secPart);
-    remain = strtok(secPart, " ");
-    // printf("%s++\n",remain);
-    struct param parameter = {sockfd, QUERY_FILE_OR_DIR, remain, PORT};
-    pthread_t t; // pthread variable
-    pthread_create(&t, NULL, child, &parameter); // new thread
-
-    pthread_join(t, NULL); // 等待子執行緒執行完成
-    while(remain != NULL) {
-        remain = strtok(NULL, " ");
-        if(remain == NULL)break;
+        remain = strtok(secPart, " ");
         // printf("%s++\n",remain);
-
         struct param parameter = {sockfd, QUERY_FILE_OR_DIR, remain, PORT};
-
-        // printf("%d\n",parameter.sockfd);
         pthread_t t; // pthread variable
         pthread_create(&t, NULL, child, &parameter); // new thread
 
         pthread_join(t, NULL); // 等待子執行緒執行完成
-    }
+        while(remain != NULL) {
+            remain = strtok(NULL, " ");
+            if(remain == NULL)break;
+            // printf("%s++\n",remain);
 
+            struct param parameter = {sockfd, QUERY_FILE_OR_DIR, remain, PORT};
+
+            // printf("%d\n",parameter.sockfd);
+            pthread_t t; // pthread variable
+            pthread_create(&t, NULL, child, &parameter); // new thread
+
+            pthread_join(t, NULL); // 等待子執行緒執行完成
+        }
+    }
     return 0;
 }

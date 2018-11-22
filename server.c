@@ -98,12 +98,12 @@ void doProcessing (int connfd)
 
 
     if(QUERY_FILE_OR_DIR[0]!='/') {
-        sprintf(sendBuff,"HTTP/1.x 400 BAD_REQUEST\r\nContent-type:\r\nServer: httpserver/1.x\r\n\r\n");
+        sprintf(sendBuff,"HTTP/1.x 400 BAD_REQUEST\r\nContent-type: \r\nServer: httpserver/1.x\r\n\r\n");
     } else if(strcmp(method, "GET")!=0) {
-        sprintf(sendBuff,"HTTP/1.x 405 \r\nContent-type:\r\nServer: httpserver/1.x\r\n\r\n");
+        sprintf(sendBuff,"HTTP/1.x 405 \r\nContent-type: \r\nServer: httpserver/1.x\r\n\r\n");
         //sprintf(sendBuff,"HTTP/1.x 405 METHOD_NOT_ALLOWED\nContent-type: %s\nServer: httpserver/1.x", contentType);
     } else if(strcmp(contentType, "falseType")==0) {
-        sprintf(sendBuff,"HTTP/1.x 415 UNSUPPORT_MEDIA_TYPE\r\nContent-type:\r\nServer: httpserver/1.x\r\n\r\n");
+        sprintf(sendBuff,"HTTP/1.x 415 UNSUPPORT_MEDIA_TYPE\r\nContent-type: \r\nServer: httpserver/1.x\r\n\r\n");
     } else {
         // printf("!!cT%s\n",contentType);
         char file_path[2048] = "";
@@ -141,7 +141,7 @@ void doProcessing (int connfd)
             if(fp == NULL) {
                 // perror("Error opening file");
                 // return(-1);
-                sprintf(sendBuff,"HTTP/1.x 404 NOT_FOUND\r\nContent-type:\r\nServer: httpserver/1.x\r\n\r\n",contentType);
+                sprintf(sendBuff,"HTTP/1.x 404 NOT_FOUND\r\nContent-type: \r\nServer: httpserver/1.x\r\n\r\n",contentType);
             } else {
                 sprintf(sendBuff,"HTTP/1.x 200 OK\r\nContent-type: %s\r\nServer: httpserver/1.x\r\n\r\n",contentType);
                 while( fgets (str, 1024, fp)!=NULL ) {
